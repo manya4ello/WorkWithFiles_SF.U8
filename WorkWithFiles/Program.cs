@@ -19,22 +19,56 @@ namespace FolderCleaner
         {
 
         }
+        
+        /// <summary>
+        /// Прежде чем удалять - давайте посмотрим
+        /// </summary>
+        /// <param name="path"></param>
         public static void ShowContent(string path)
         {
             if (Directory.Exists(path)) // Проверим, что директория существует
             {
-                Console.WriteLine("Папки:");
+                //Console.WriteLine("Папки:");
                 string[] dirs = Directory.GetDirectories(path);  // Получим все директории каталога
 
                 foreach (string d in dirs) // Выведем их все
-                    Console.WriteLine(d);
+                {
+                    Console.WriteLine();
+                    Console.Write("Папка:");
+                    TimeSpan unused = DateTime.Now.Subtract(File.GetLastWriteTime(Path.GetFullPath(d)));
+                    Console.WriteLine($"{d} Последняя запись: {File.GetLastWriteTime(Path.GetFullPath(d))}, время бездействия мин: {unused.TotalMinutes:F} / дни: {unused:%d} ");
+                    CheckFiles(d);
+                    ShowContent(Path.GetFullPath(d));
+                }
+                CheckFiles(path);
+            }
+        }
+        public static void CheckFiles(string folder)
+        {
+           string[] files = Directory.GetFiles(folder);
+            Console.WriteLine("Файлы:");
 
-                Console.WriteLine();
-                Console.WriteLine("Файлы:");
-                string[] files = Directory.GetFiles(path);// Получим все файлы каталога
-
-                foreach (string s in files)   // Выведем их все
-                    Console.WriteLine(s);
+            foreach (string s in files)
+            {
+                DateTime lastmodified = File.GetLastWriteTime(Path.GetFullPath(s));
+                TimeSpan unused = DateTime.Now.Subtract(File.GetLastWriteTime(Path.GetFullPath(s)));
+                Console.Write(s);
+                if (unused>TimeSpan.FromMinutes(30))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write(" СТЕРЕТЬ!!!");
+                    Console.ResetColor();
+                    Console.Write($" Последняя запись: {File.GetLastWriteTime(Path.GetFullPath(s))}, время бездействия мин: {unused.TotalMinutes:F} / дни: {unused:%d} ");
+                    Console.WriteLine();
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.Write(" ОК");
+                    Console.ResetColor();
+                    Console.Write($" Последняя запись: {File.GetLastWriteTime(Path.GetFullPath(s))}, время бездействия мин: {unused.TotalMinutes:F} / дни: {unused:%d} ");
+                    Console.WriteLine();
+                }
             }
         }
     }
