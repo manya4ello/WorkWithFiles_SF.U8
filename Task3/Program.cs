@@ -63,12 +63,12 @@ namespace FolderCleaner
                 
                 Console.WriteLine("Удалено файлов: {0} шт. размером {1} байт ({2} MB)\tНовый размер папки {3} байт ({4} MB)", delcount, delsize, delsize / 1048576, foldersize, foldersize / 1048576);   
                 string[] dirs = Directory.GetDirectories(path);
-                DirCheck(path);
-
+                
                 foreach (string d in dirs)
                 {
                     DirRunner(d);
                 }
+                DirCheck(path);
             }
             else
                 Console.WriteLine("Нет такой директории");
