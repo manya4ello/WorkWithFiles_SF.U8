@@ -15,59 +15,100 @@ namespace FolderCleaner
 {
     public static class FolderManager
     {
-        public static void DirCleaner(string path)
+              
+       public static void DirRunner(string path)
         {
-
-        }
-        
-        /// <summary>
-        /// Прежде чем удалять - давайте посмотрим
-        /// </summary>
-        /// <param name="path"></param>
-        public static void ShowContent(string path)
-        {
-            if (Directory.Exists(path)) // Проверим, что директория существует
+            if (Directory.Exists(path))
             {
-                //Console.WriteLine("Папки:");
-                string[] dirs = Directory.GetDirectories(path);  // Получим все директории каталога
-
-                foreach (string d in dirs) // Выведем их все
-                {
-                    Console.WriteLine();
-                    Console.Write("Папка:");
-                    TimeSpan unused = DateTime.Now.Subtract(File.GetLastWriteTime(Path.GetFullPath(d)));
-                    Console.WriteLine($"{d} Последняя запись: {File.GetLastWriteTime(Path.GetFullPath(d))}, время бездействия мин: {unused.TotalMinutes:F} / дни: {unused:%d} ");
-                    CheckFiles(d);
-                    ShowContent(Path.GetFullPath(d));
-                }
                 CheckFiles(path);
+                string[] dirs = Directory.GetDirectories(path);
+                DirCheck(path);
+
+                foreach (string d in dirs) 
+                {
+                    DirRunner(d);
+                }
             }
+            else
+                Console.WriteLine("Нет такой директории");
         }
+        /// <summary>
+        /// Проверяет файлы в папке и, если не использовались более 30 мин - удаляет
+        /// </summary>
+        /// <param name="folder"></param>
         public static void CheckFiles(string folder)
         {
-           string[] files = Directory.GetFiles(folder);
-            Console.WriteLine("Файлы:");
+            string[] files = Directory.GetFiles(folder);
+            if (files.Length !=0) 
+                Console.WriteLine("Файлы: в папке {0}", folder);
 
             foreach (string s in files)
             {
-                DateTime lastmodified = File.GetLastWriteTime(Path.GetFullPath(s));
-                TimeSpan unused = DateTime.Now.Subtract(File.GetLastWriteTime(Path.GetFullPath(s)));
+                DateTime lastmodified = File.GetLastWriteTime(s);
+                TimeSpan unused = DateTime.Now.Subtract(File.GetLastWriteTime(s));
                 Console.Write(s);
                 if (unused>TimeSpan.FromMinutes(30))
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write(" СТЕРЕТЬ!!!");
-                    Console.ResetColor();
-                    Console.Write($" Последняя запись: {File.GetLastWriteTime(Path.GetFullPath(s))}, время бездействия мин: {unused.TotalMinutes:F} / дни: {unused:%d} ");
-                    Console.WriteLine();
+                   
+                    Console.Write(" Надо стереть!");
+                    try
+                    {
+                        File.Delete(s);
+                        Console.Write("Файл успешно удален");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine(ex.Message);
+                        Console.ResetColor();
+                    }
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.Write(" ОК");
+                    Console.Write(" пусть еще поживет");
+                   
+                }
+                Console.ResetColor();
+                //Console.Write($" Последняя запись: {File.GetLastWriteTime(Path.GetFullPath(s))}, время бездействия мин: {unused.TotalMinutes:F} / дни: {unused:%d} ");
+                Console.WriteLine();
+            }
+        }
+
+        /// <summary>
+        /// Проверяет, что директория:
+        /// не содержит файлов, не содержит папок, не использовалась более 30 минут
+        /// </summary>
+        /// <param name="path"></param>
+        public static void DirCheck (string path)
+        {
+            bool check1 = Directory.Exists(path);
+            bool check2 = (Directory.GetDirectories(path).Length == 0);
+            bool check3 = (Directory.GetFiles(path).Length == 0);
+            bool check4 = (DateTime.Now.Subtract(File.GetLastWriteTime(path)) > TimeSpan.FromMinutes(30));
+            if (check1)
+                {
+                Console.Write("Проверка {0}", path);
+                if (check2 & check3 & check4)
+                {
+                    Console.Write(" надо удалить");
+                    try
+                    {
+                        Directory.Delete(path, true); //хотя true тут не нужен т.к. мы проверяем, что папка пустая. А если не пустая - идем глубже и стираем все по условию
+                        Console.Write("Дериктория успешно удалена");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine(ex.Message);
+                        Console.ResetColor();
+                    }
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine(" пусть еще поживет");
                     Console.ResetColor();
-                    Console.Write($" Последняя запись: {File.GetLastWriteTime(Path.GetFullPath(s))}, время бездействия мин: {unused.TotalMinutes:F} / дни: {unused:%d} ");
-                    Console.WriteLine();
                 }
             }
         }
@@ -78,14 +119,15 @@ namespace FolderCleaner
         {
             string path = @"C:\SF Tests";
             if (Directory.Exists(path))
-                Console.WriteLine("есть такая папка");
-            else
+                Console.WriteLine("Есть такая папка");
+                        else
             {
                 Directory.CreateDirectory(path);
                 Console.WriteLine("Теперь есть такая папка");
             }
+            Console.WriteLine();
 
-            FolderManager.ShowContent(path);
+            FolderManager.DirRunner(path);
 
 
             Console.ReadKey();  
