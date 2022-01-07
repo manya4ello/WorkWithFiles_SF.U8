@@ -29,11 +29,56 @@ namespace Students
         {
             public string Name;
             public string Group;
-            //public DateTime DateOfBirth;
+            private DateTime _DateOfBirth;
+            private DateTimeOffset _Date;
+            public long DateOfBirth
+            { 
+                get
+                { 
+                    
+                    return _Date.ToUnixTimeSeconds;
+                }
+                set {
+                    _DateOfBirth = new DateTime(value);
+                }
+            }
             public Student(string name, string group)
             {
                 Name = name;
                 Group = group;
+                _DateOfBirth = new DateTime(1967, 7, 20); 
+            }
+        }
+
+        public static void CreateTestFile(string path)
+        {
+            Student[] student = new Student[3];
+            student[0] = new Student("Вася", "грузчик");
+            student[1] = new Student("Петя", "грузчик");
+            student[2] = new Student("Женя", "пианист");
+
+            if (!File.Exists(path))
+                File.Create(path);
+
+
+            if (File.Exists(path))
+            {
+                try
+                {
+                    using (BinaryWriter w = new BinaryWriter(File.Open(path, FileMode.Append)))
+                    {
+                        for (int i = 0; i < 3; i++)
+                        {
+                            w.Write(student[i].Name);
+                            w.Write(student[i].Group);
+                            w.Write(student[i].DateOfBirth);
+                        }
+                        w.Close();
+                    }
+
+                }
+                catch (Exception ex)
+                { Console.WriteLine(ex.Message); }
             }
         }
         static void Main(string[] args)
@@ -49,30 +94,27 @@ namespace Students
                 Console.WriteLine("Теперь есть такая папка");
             }
 
-            Student[] student = new Student[3];
-            student[0] = new Student("Вася", "грузчик");
-            student[1] = new Student("Петя", "грузчик");
-            student[2] = new Student("Женя", "пианист");
+            CreateTestFile(testpath);
+           
 
-            File.Create(testpath);
-            if (File.Exists(testpath))
+            try
+            {
+                using (BinaryReader reader = new BinaryReader(File.Open(testpath, FileMode.Open)))
                 {
-                try
-                {
-                    using (BinaryWriter w = new BinaryWriter(File.Open(testpath, FileMode.Open)))
+                    while (reader.PeekChar() > -1)
                     {
-                        for (int i = 0; i < 3; i++)
-                        {
-                            w.Write(student[i].Name);
-                            w.Write(student[i].Group);
-                        }
-
+                        string Name = reader.ReadString();
+                        string Group = reader.ReadString();
+                        long DateOfBirth = reader.ReadInt64();
+                        Console.WriteLine("Из файла считано:{0}, {1}, {2}", Name, Group, new DateTime(DateOfBirth));
                     }
 
                 }
-                catch (Exception ex)
-                { Console.WriteLine(ex.Message); }
+
             }
+            catch (Exception ex)
+            { Console.WriteLine(ex.Message); }
+            ;
             //if (File.Exists(sourcefile))
             //{
             //    try
@@ -99,6 +141,6 @@ namespace Students
             //}
 
         }
-        }
+    }
 }
 
