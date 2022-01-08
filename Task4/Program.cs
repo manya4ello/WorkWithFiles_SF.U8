@@ -8,8 +8,8 @@
 //Имя — Name(string);
 //Группа — Group(string);
 //Дата рождения — DateOfBirth (DateTime).
-//Ваша программа должна:
 
+//Ваша программа должна:
 //Создать на рабочем столе директорию Students.
 //Внутри раскидать всех студентов из файла по группам (каждая группа-отдельный текстовый файл), в файле группы студенты перечислены построчно в формате "Имя, дата рождения".
 //Критерии оценивания
@@ -31,43 +31,51 @@ namespace Students
             public string Group;
             private DateTime _DateOfBirth;
             private DateTimeOffset _Date;
+            long test;
             public long DateOfBirth
             { 
                 get
                 { 
-                    
-                    return _Date.ToUnixTimeSeconds;
+                    return _Date.ToUnixTimeSeconds();
                 }
                 set {
-                    _DateOfBirth = new DateTime(value);
-                }
+                    _Date = DateTimeOffset.FromUnixTimeSeconds(value);
+                    _DateOfBirth = _Date.UtcDateTime;
+                    }
             }
             public Student(string name, string group)
             {
                 Name = name;
                 Group = group;
-                _DateOfBirth = new DateTime(1967, 7, 20); 
+                DateOfBirth = new DateTimeOffset(1983,10,15,0,0,0, new TimeSpan(0,0,0)).ToUnixTimeSeconds(); 
+            }
+            public Student(string name, string group, DateTimeOffset date)
+            {
+                Name = name;
+                Group = group;
+                DateOfBirth = date.ToUnixTimeSeconds();
             }
         }
-
+        /// <summary>
+        /// Создает бинарный файл по заданному адресу
+        /// </summary>
+        /// <param name="path"></param>
         public static void CreateTestFile(string path)
         {
-            Student[] student = new Student[3];
-            student[0] = new Student("Вася", "грузчик");
-            student[1] = new Student("Петя", "грузчик");
-            student[2] = new Student("Женя", "пианист");
+            Student[] student = new Student[6];
+            student[0] = new Student("Вася", "математик");
+            student[1] = new Student("Петя", "физик");
+            student[2] = new Student("Женя", "химик", new DateTimeOffset(1984, 1, 12, 0, 0, 0, new TimeSpan(0, 0, 0)));
+            student[3] = new Student("Аня", "математик", new DateTimeOffset(1984, 11, 15, 0, 0, 0, new TimeSpan(0, 0, 0)));
+            student[4] = new Student("Эдик", "физик", new DateTimeOffset(1983, 9, 6, 0, 0, 0, new TimeSpan(0, 0, 0)));
+            student[5] = new Student("Полина", "химик", new DateTimeOffset(1983, 12, 10, 0, 0, 0, new TimeSpan(0, 0, 0)));
 
-            if (!File.Exists(path))
-                File.Create(path);
-
-
-            if (File.Exists(path))
-            {
+           
                 try
                 {
-                    using (BinaryWriter w = new BinaryWriter(File.Open(path, FileMode.Append)))
+                    using (BinaryWriter w = new BinaryWriter(File.Open(path, FileMode.OpenOrCreate)))
                     {
-                        for (int i = 0; i < 3; i++)
+                        for (int i = 0; i<student.Length; i++)
                         {
                             w.Write(student[i].Name);
                             w.Write(student[i].Group);
@@ -78,14 +86,15 @@ namespace Students
 
                 }
                 catch (Exception ex)
-                { Console.WriteLine(ex.Message); }
-            }
+                { Console.WriteLine("Не получается добавить записи: {0}",ex.Message); }
+           
         }
         static void Main(string[] args)
         {
-            string sourcefile = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + @"\Students.dat";
+            string sourcefile = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + @"\StudentsNew.dat";
             string path = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + @"\Students";
-            string testpath = path + @"\test.dat";
+            //string testpath = path + @"\test.dat";
+
             if (Directory.Exists(path))
                 Console.WriteLine("Есть такая папка");
             else
@@ -94,27 +103,83 @@ namespace Students
                 Console.WriteLine("Теперь есть такая папка");
             }
 
-            CreateTestFile(testpath);
+            CreateTestFile(sourcefile);
            
 
             try
             {
-                using (BinaryReader reader = new BinaryReader(File.Open(testpath, FileMode.Open)))
+                using (BinaryReader reader = new BinaryReader(File.Open(sourcefile, FileMode.Open)))
                 {
+                    List<string> Groups = new List<string>();   
                     while (reader.PeekChar() > -1)
                     {
                         string Name = reader.ReadString();
                         string Group = reader.ReadString();
                         long DateOfBirth = reader.ReadInt64();
-                        Console.WriteLine("Из файла считано:{0}, {1}, {2}", Name, Group, new DateTime(DateOfBirth));
+                        Console.WriteLine("Из файла считано:{0}, {1}, {2}", Name, Group, DateTimeOffset.FromUnixTimeSeconds(DateOfBirth).ToString("D"));
+                        
+                        ///Пишем по категории в бинарный файл
+                        string Grouppath = Path.Combine(path, Group+".dat");
+                        if (!File.Exists(Grouppath))
+                            Console.WriteLine("создаем файл {0}", Grouppath);
+                        else if (!Groups.Contains(Group))
+                        {
+                            File.Delete(Grouppath); //чистим мусор от прежних запусков
+                            Console.WriteLine("Удаляем старый файл {0} и создаем новый",Grouppath);
+                        }
+                            try
+                        {
+                            using (BinaryWriter w = new BinaryWriter(File.Open(Grouppath, FileMode.Append)))
+                            {
+                                    w.Write(Name);                                  
+                                    w.Write(DateOfBirth);
+                                
+                                w.Close();
+                            }
+
+                        }
+                        catch (Exception ex)
+                        { Console.WriteLine("Не получается добавить запись в файл {0}: {1}", Grouppath, ex.Message); }
+
+                        ///Пишем по категории в текстовый файл
+                        Grouppath = Path.Combine(path, Group + ".txt");
+                        if (!File.Exists(Grouppath))
+                            Console.WriteLine("создаем файл {0}", Grouppath);
+                        else if (!Groups.Contains(Group))
+                        {
+                            File.Delete(Grouppath); //чистим мусор от прежних запусков
+                            Console.WriteLine("Удаляем старый файл {0} и создаем новый", Grouppath);
+                        }
+
+                        var textfile = new FileInfo(Grouppath);
+                        try
+                        {
+                            using (StreamWriter w = textfile.AppendText()) 
+                            {
+                                w.Write(Name+" ");
+                                w.WriteLine(DateTimeOffset.FromUnixTimeSeconds(DateOfBirth).ToString("D"));
+
+                                w.Close();
+                            }
+
+                        }
+                        catch (Exception ex)
+                        { Console.WriteLine("Не получается добавить запись в файл {0}: {1}", Grouppath, ex.Message); }
+                       
+                        if (!Groups.Contains(Group))
+                            Groups.Add(Group);
+
                     }
+                    
 
                 }
 
             }
             catch (Exception ex)
-            { Console.WriteLine(ex.Message); }
-            ;
+            { 
+                Console.WriteLine(ex.Message); 
+            }
+
             //if (File.Exists(sourcefile))
             //{
             //    try
