@@ -93,8 +93,7 @@ namespace Students
         {
             string sourcefile = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + @"\StudentsNew.dat";
             string path = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + @"\Students";
-            //string testpath = path + @"\test.dat";
-
+        
             if (Directory.Exists(path))
                 Console.WriteLine("Есть такая папка");
             else
@@ -103,14 +102,15 @@ namespace Students
                 Console.WriteLine("Теперь есть такая папка");
             }
 
-            CreateTestFile(sourcefile);
+            if (!File.Exists(sourcefile))
+                CreateTestFile(sourcefile);
            
-
             try
             {
                 using (BinaryReader reader = new BinaryReader(File.Open(sourcefile, FileMode.Open)))
                 {
-                    List<string> Groups = new List<string>();   
+                    List<string> Groups = new List<string>();   //Следить за мусором от предыдущих запусков + сохранить категории если вдруг понадобится что-то делать с файлами далее
+
                     while (reader.PeekChar() > -1)
                     {
                         string Name = reader.ReadString();
@@ -179,31 +179,7 @@ namespace Students
             { 
                 Console.WriteLine(ex.Message); 
             }
-
-            //if (File.Exists(sourcefile))
-            //{
-            //    try
-            //    {
-            //        using (BinaryReader reader = new BinaryReader(File.Open(sourcefile, FileMode.Open)))
-            //        {
-            //            while (reader.PeekChar() > -1)
-            //            {
-            //                string Name = reader.ReadString();
-            //                string Group = reader.ReadString();
-            //                string DateOfBirth = reader.ReadString();
-            //                Console.WriteLine("Из файла считано:{0}, {1}", Name, Group);
-            //            }
-
-            //        }
-
-            //    }
-            //    catch (Exception ex)
-            //    { Console.WriteLine(ex.Message); }  
-
-            //    //Console.WriteLine(student.Name);
-            //    //Console.WriteLine(student.Group);
-
-            //}
+                    
 
         }
     }
