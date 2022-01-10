@@ -16,7 +16,7 @@
 
 using System;
 using System.IO;
-namespace FolderCleaner
+namespace Task3
 {
     public static class FolderManager
     {
@@ -42,17 +42,19 @@ namespace FolderCleaner
             long oldfoldersize = 0;
             if (Directory.Exists(path))
             {
+                DateTime lastaccesscatch = Directory.GetLastAccessTime(path); //считываем время последнего доступа ДО обращения к директории
                 try
                 {
                     oldfoldersize = FolderManager.GetSize(path);
-                    Console.WriteLine("Размер директории {0} - {1} byte ({2} MB)", path, oldfoldersize, oldfoldersize / 1048576);
+                    Console.WriteLine("Размер директории {0} - {1} byte ({2} MB)", path, oldfoldersize, oldfoldersize / 1048576);                       
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("Не удалось рассчитать размер {0} \tОшибка: {1}", path, ex.Message);
                 }
 
-                DirCheck(path);
+                DirCheck(path, lastaccesscatch);
+
                 if (!Directory.Exists(path))
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
@@ -126,7 +128,7 @@ namespace FolderCleaner
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.Write(" пусть еще поживет");
+                    Console.Write(" пусть еще поживет ({0})", (TimeSpan.FromMinutes(30) - unused).ToString(@"hh\:mm\:ss"));
 
                 }
                 Console.ResetColor();
@@ -137,23 +139,22 @@ namespace FolderCleaner
 
         /// <summary>
         /// Проверяет, что директория:
-        /// не содержит файлов, не содержит папок, не использовалась более 30 минут
+        /// не использовалась более 30 минут
         /// </summary>
         /// <param name="path"></param>
-        public static void DirCheck(string path)
+        public static void DirCheck(string path, DateTime lastaccess)
         {
-            bool check1 = Directory.Exists(path);
-           
-            if (check1)
+                       
+            if (Directory.Exists(path))
             {
-                //bool check2 = (Directory.GetDirectories(path).Length == 0);
-                //bool check3 = (Directory.GetFiles(path).Length == 0);
-                bool check4 = (DateTime.Now.Subtract(File.GetLastAccessTime(path)) > TimeSpan.FromMinutes(30));
+                bool check4 = (DateTime.Now.Subtract(lastaccess) > TimeSpan.FromMinutes(30));
 
                 Console.Write("Проверка {0}", path);
                 if (check4)
                 {
-                    Console.Write(" надо удалить");
+                    Console.ForegroundColor = ConsoleColor.Yellow; 
+                    Console.Write(" надо удалить. ");
+                    Console.ResetColor();
                     try
                     {
                         Directory.Delete(path, true); 
@@ -162,14 +163,14 @@ namespace FolderCleaner
                     catch (Exception ex)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine(ex.Message);
+                        Console.WriteLine("Не получилось удалить: {0}",ex.Message);
                         Console.ResetColor();
                     }
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine(" пусть еще поживет");
+                    Console.WriteLine(" пусть еще поживет ({0})", (TimeSpan.FromMinutes(30) - DateTime.Now.Subtract(lastaccess)).ToString(@"hh\:mm\:ss"));
                     Console.ResetColor();
                 }
             }
@@ -188,6 +189,8 @@ namespace FolderCleaner
                 Console.WriteLine("Теперь есть такая папка");
             }
             Console.WriteLine();
+
+            //Console.WriteLine("Проверка времени пока не начали: {0}",TimeSpan.FromMinutes(30) - DateTime.Now.Subtract(Directory.GetLastAccessTime(path)));
 
             FolderManager.DirRunner(path);
 

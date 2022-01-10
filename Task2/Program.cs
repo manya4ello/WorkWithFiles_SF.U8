@@ -8,7 +8,7 @@
 
 using System;
 using System.IO;
-namespace FolderCleaner
+namespace Task2
 {
     public static class FolderManager
     {
