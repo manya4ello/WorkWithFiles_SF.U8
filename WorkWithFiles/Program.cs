@@ -93,7 +93,7 @@ namespace Task1
                 Console.Write("Проверка {0}", path);
                // bool check2 = (Directory.GetDirectories(path).Length == 0);
                // bool check3 = (Directory.GetFiles(path).Length == 0);
-                bool check4 = (DateTime.Now.Subtract(File.GetLastAccessTime(path)) > TimeSpan.FromMinutes(30));
+                bool check4 = (DateTime.Now.Subtract(Directory.GetLastAccessTime(path)) > TimeSpan.FromMinutes(30));
 
                 if (check4)
                 {
