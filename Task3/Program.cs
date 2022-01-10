@@ -38,37 +38,48 @@ namespace FolderCleaner
         public static void DirRunner(string path)
         {
             long delsize = 0;
-            int delcount = 0;   
+            int delcount = 0;
+            long oldfoldersize = 0;
             if (Directory.Exists(path))
             {
                 try
                 {
-                    Console.WriteLine("Размер директории {0} - {1} byte ({2} MB)", path, FolderManager.GetSize(path), FolderManager.GetSize(path) / 1048576);
+                    oldfoldersize = FolderManager.GetSize(path);
+                    Console.WriteLine("Размер директории {0} - {1} byte ({2} MB)", path, oldfoldersize, oldfoldersize / 1048576);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("Не удалось рассчитать размер {0} \tОшибка: {1}", path, ex.Message);
                 }
-                
-                CheckFiles(path,out delsize,out delcount);
-                long foldersize=0;
-                try
-                {
-                    foldersize=FolderManager.GetSize(path);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Не удалось рассчитать размер {0} \tОшибка: {1}", path, ex.Message);
-                }
-                
-                Console.WriteLine("Удалено файлов: {0} шт. размером {1} байт ({2} MB)\tНовый размер папки {3} байт ({4} MB)", delcount, delsize, delsize / 1048576, foldersize, foldersize / 1048576);   
-                string[] dirs = Directory.GetDirectories(path);
-                
-                foreach (string d in dirs)
-                {
-                    DirRunner(d);
-                }
+
                 DirCheck(path);
+                if (!Directory.Exists(path))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Директория {0} удалена, освоюождено {1} byte ({2} MB)", path, oldfoldersize, oldfoldersize / 1048576);
+                    Console.ResetColor();
+                }
+                else
+                {
+                    CheckFiles(path, out delsize, out delcount);
+                    long newfoldersize = 0;
+                    try
+                    {
+                        newfoldersize = FolderManager.GetSize(path);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Не удалось рассчитать размер {0} \tОшибка: {1}", path, ex.Message);
+                    }
+
+                    Console.WriteLine("Удалено файлов: {0} шт. размером {1} байт ({2} MB)\tНовый размер папки {3} байт ({4} MB)", delcount, delsize, delsize / 1048576, newfoldersize, newfoldersize / 1048576);
+                    string[] dirs = Directory.GetDirectories(path);
+
+                    foreach (string d in dirs)
+                    {
+                        DirRunner(d);
+                    }
+                }
             }
             else
                 Console.WriteLine("Нет такой директории");
@@ -90,7 +101,7 @@ namespace FolderCleaner
 
             foreach (FileInfo s in files)
             {
-                DateTime lastmodified = s.LastWriteTime;
+                DateTime lastmodified = s.LastAccessTime;
                 TimeSpan unused = DateTime.Now.Subtract(lastmodified);
                 Console.Write(s);
                 if (unused > TimeSpan.FromMinutes(30))
@@ -132,18 +143,20 @@ namespace FolderCleaner
         public static void DirCheck(string path)
         {
             bool check1 = Directory.Exists(path);
-            bool check2 = (Directory.GetDirectories(path).Length == 0);
-            bool check3 = (Directory.GetFiles(path).Length == 0);
-            bool check4 = (DateTime.Now.Subtract(File.GetLastWriteTime(path)) > TimeSpan.FromMinutes(30));
+           
             if (check1)
             {
+                //bool check2 = (Directory.GetDirectories(path).Length == 0);
+                //bool check3 = (Directory.GetFiles(path).Length == 0);
+                bool check4 = (DateTime.Now.Subtract(File.GetLastAccessTime(path)) > TimeSpan.FromMinutes(30));
+
                 Console.Write("Проверка {0}", path);
-                if (check2 & check3 & check4)
+                if (check4)
                 {
                     Console.Write(" надо удалить");
                     try
                     {
-                        Directory.Delete(path, true); //хотя true тут не нужен т.к. мы проверяем, что папка пустая. А если не пустая - идем глубже и стираем все по условию
+                        Directory.Delete(path, true); 
                         Console.Write("Дериктория успешно удалена");
                     }
                     catch (Exception ex)

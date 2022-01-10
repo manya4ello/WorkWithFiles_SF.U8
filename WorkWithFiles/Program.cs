@@ -20,13 +20,17 @@ namespace FolderCleaner
         {
             if (Directory.Exists(path))
             {
-                CheckFiles(path);
-                string[] dirs = Directory.GetDirectories(path);
                 DirCheck(path);
-
-                foreach (string d in dirs) 
+                if (Directory.Exists(path))
                 {
-                    DirRunner(d);
+                    CheckFiles(path);
+                    string[] dirs = Directory.GetDirectories(path);
+
+
+                    foreach (string d in dirs)
+                    {
+                        DirRunner(d);
+                    }
                 }
             }
             else
@@ -44,8 +48,8 @@ namespace FolderCleaner
 
             foreach (string s in files)
             {
-                DateTime lastmodified = File.GetLastWriteTime(s);
-                TimeSpan unused = DateTime.Now.Subtract(File.GetLastWriteTime(s));
+                DateTime lastaccess = File.GetLastAccessTime(s);
+                TimeSpan unused = DateTime.Now.Subtract(lastaccess);
                 Console.Write(s);
                 if (unused>TimeSpan.FromMinutes(30))
                 {
@@ -77,24 +81,26 @@ namespace FolderCleaner
 
         /// <summary>
         /// Проверяет, что директория:
-        /// не содержит файлов, не содержит папок, не использовалась более 30 минут
+        /// не использовалась более 30 минут
         /// </summary>
         /// <param name="path"></param>
         public static void DirCheck (string path)
         {
             bool check1 = Directory.Exists(path);
-            bool check2 = (Directory.GetDirectories(path).Length == 0);
-            bool check3 = (Directory.GetFiles(path).Length == 0);
-            bool check4 = (DateTime.Now.Subtract(File.GetLastWriteTime(path)) > TimeSpan.FromMinutes(30));
+            
             if (check1)
                 {
                 Console.Write("Проверка {0}", path);
-                if (check2 & check3 & check4)
+               // bool check2 = (Directory.GetDirectories(path).Length == 0);
+               // bool check3 = (Directory.GetFiles(path).Length == 0);
+                bool check4 = (DateTime.Now.Subtract(File.GetLastAccessTime(path)) > TimeSpan.FromMinutes(30));
+
+                if (check4)
                 {
                     Console.Write(" надо удалить");
                     try
                     {
-                        Directory.Delete(path, true); //хотя true тут не нужен т.к. мы проверяем, что папка пустая. А если не пустая - идем глубже и стираем все по условию
+                        Directory.Delete(path, true); 
                         Console.Write("Дериктория успешно удалена");
                     }
                     catch (Exception ex)
