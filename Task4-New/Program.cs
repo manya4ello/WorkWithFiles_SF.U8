@@ -26,31 +26,30 @@ using System;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
-namespace Students
+namespace FinalTask
 {
+    [Serializable]
+    public class Student
+    {
+        public string Name { get; set; }
+        public string Group { get; set; }
+        public DateTime DateOfBirth { get; set; }
+
+        public Student(string name, string group)
+        {
+            Name = name;
+            Group = group;
+            DateOfBirth = new DateTime(1983, 10, 15, 0, 0, 0);
+        }
+        public Student(string name, string group, DateTime date)
+        {
+            Name = name;
+            Group = group;
+            DateOfBirth = date;
+        }
+    }
     class Program
     {
-        [Serializable]
-        public class Student
-        {
-            public string Name { get; set; }
-            public string Group { get; set; }
-            public DateTime DateOfBirth { get; set; }
-
-            public Student(string name, string group)
-            {
-                Name = name;
-                Group = group;
-                DateOfBirth = new DateTime(1983, 10, 15, 0, 0, 0);
-            }
-            public Student(string name, string group, DateTime date)
-            {
-                Name = name;
-                Group = group;
-                DateOfBirth = date;
-            }
-        }
-
         /// <summary>
         /// Создает бинарный файл по заданному адресу
         /// </summary>
@@ -86,7 +85,7 @@ namespace Students
         }
         static void Main(string[] args)
         {
-            string sourcefile = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + @"\StudentsNewSerBin.dat";
+            string sourcefile = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + @"\Students.dat";
             string path = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + @"\Students";
 
             if (!Directory.Exists(path))
